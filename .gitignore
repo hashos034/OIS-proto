@@ -26,3 +26,10 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# documents and screenshots
+*.docx
+concept diagram/
+interaction-diagram/
+sketch docent/
+sketch student/
