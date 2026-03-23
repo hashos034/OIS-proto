@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --color-uu-red: #C00A35;
+  --color-uu-red-dark: #9B0828;
+  --color-uu-black: #1B1B1B;
+  --color-uu-surface: #F5F5F5;
+  --color-uu-card: #FFFFFF;
+  --color-uu-border: #E5E7EB;
+  --color-uu-yellow: #FFCD00;
+  --color-uu-success: #16A34A;
+  --color-uu-warning: #F59E0B;
+  --color-uu-text: #1B1B1B;
+  --color-uu-text-secondary: #9CA3AF;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: #F5F5F5;
+  color: #1B1B1B;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions globally */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Submit success animations */
+@keyframes scaleIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Wrapped animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
