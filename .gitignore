@@ -33,3 +33,12 @@ concept diagram/
 interaction-diagram/
 sketch docent/
 sketch student/
+script-loom-pitch.md
+
+# claude code
+.claude/
+CLAUDE.md
+
+# generated
+design-system/
+__pycache__/
