@@ -159,10 +159,30 @@ export const userProfile: UserProfile = {
 };
 
 export const docentComments: Record<string, DocentComment[]> = {
-  statistiek: [
+  "toets-1": [
     { date: "10 mrt 2026", text: "Bedankt voor jullie feedback over de hoorcolleges! We gaan de slides duidelijker structureren." },
+  ],
+  "hoorcollege-3": [
     { date: "3 mrt 2026", text: "Op basis van de evaluaties hebben we extra oefenmateriaal toegevoegd op Brightspace." },
   ],
+  "chem-toets-1": [
+    { date: "15 mrt 2026", text: "Naar aanleiding van jullie feedback passen we het practicum aan met duidelijkere instructies." },
+  ],
+  "wisk-toets-1": [
+    { date: "20 feb 2026", text: "Fijn om te horen dat de oefenopgaven nuttig waren. We voegen er nog meer toe voor volgend jaar." },
+  ],
+};
+
+export interface WrappedProgress {
+  completedSurveys: number;
+  requiredSurveys: number;
+  unlocked: boolean;
+}
+
+export const wrappedProgress: WrappedProgress = {
+  completedSurveys: 3,
+  requiredSurveys: 7,
+  unlocked: false,
 };
 
 // Helper to get surveys for a course

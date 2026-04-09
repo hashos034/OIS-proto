@@ -9,7 +9,6 @@ import {
   Star,
   ChevronDown,
   ChevronUp,
-  BarChart3,
   ArrowRight,
 } from "lucide-react";
 import { useState } from "react";
@@ -18,6 +17,8 @@ import Breadcrumb from "@/components/docent/Breadcrumb";
 import StatCard from "@/components/docent/StatCard";
 import ExportButton from "@/components/docent/ExportButton";
 import DocentBarChart from "@/components/docent/DocentBarChart";
+import DocentPieChart from "@/components/docent/DocentPieChart";
+import ChartToggle from "@/components/docent/ChartToggle";
 import ComparisonChart from "@/components/docent/ComparisonChart";
 import ProgressionChart from "@/components/docent/ProgressionChart";
 
@@ -28,51 +29,7 @@ import {
   getMCResponseData,
   getYearComparison,
   getProgressionData,
-  DocentSurvey,
 } from "@/data/mock-docent";
-
-// ── Status badge ──────────────────────────────────────────────────
-function SurveyStatusBadge({ status }: { status: DocentSurvey["status"] }) {
-  const map: Record<DocentSurvey["status"], { label: string; classes: string }> = {
-    closed: {
-      label: "Gesloten",
-      classes: "bg-uu-surface text-uu-text-secondary",
-    },
-    published: {
-      label: "Gepubliceerd",
-      classes: "bg-uu-success/20 text-uu-success",
-    },
-    draft: {
-      label: "Concept",
-      classes: "bg-uu-yellow/10 text-uu-warning",
-    },
-  };
-  const { label, classes } = map[status];
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${classes}`}>
-      {label}
-    </span>
-  );
-}
-
-// ── Small inline response bar for survey cards ─────────────────────
-function ResponseBar({ count, total }: { count: number; total: number }) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-  return (
-    <div className="mt-3">
-      <div className="flex justify-between text-xs text-uu-text-secondary mb-1">
-        <span>{count} van {total} studenten</span>
-        <span className="font-medium text-uu-text">{pct}%</span>
-      </div>
-      <div className="h-1.5 bg-uu-surface rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full bg-uu-black transition-all duration-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
 
 // ── Collapsible section ────────────────────────────────────────────
 function CollapsibleSection({
@@ -147,8 +104,18 @@ export default function StatistiekenPage() {
   const firstMCQuestion = firstSurveyQuestions.find((q) => q.type === "multiple-choice");
   const yearComparison = firstMCQuestion ? getYearComparison(firstMCQuestion.id) : undefined;
 
-  // MC questions for "Resultaten per vraag" section — from first closed survey
-  const mcQuestions = firstSurveyQuestions.filter((q) => q.type === "multiple-choice");
+  // ── Survey selector state ──────────────────────────────────────────
+  const surveysWithData = surveys.filter((s) => s.status === "closed" || s.status === "published");
+  const [selectedSurveyId, setSelectedSurveyId] = useState<string>(firstClosedSurvey?.id ?? "");
+
+  // ── Chart type toggle ─────────────────────────────────────────────
+  const [chartView, setChartView] = useState<"pie" | "bar">("bar");
+
+  const selectedSurveyQuestions = selectedSurveyId
+    ? getDocentQuestionsBySurvey(selectedSurveyId)
+    : [];
+  const mcQuestions = selectedSurveyQuestions.filter((q) => q.type === "multiple-choice");
+  const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
 
   if (!course) {
     return (
@@ -269,73 +236,56 @@ export default function StatistiekenPage() {
         )}
       </div>
 
-      {/* ── Section 3: Results per survey ── */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="mb-5">
-          <h2 className="text-lg font-semibold text-uu-text">
-            Resultaten per enquête
-          </h2>
-          <p className="text-sm text-uu-text-secondary mt-0.5">
-            {surveys.length} enquête{surveys.length !== 1 ? "s" : ""} voor deze cursus
-          </p>
-        </div>
-        {surveys.length === 0 ? (
-          <p className="text-sm text-uu-text-secondary">
-            Er zijn nog geen enquêtes aangemaakt voor deze cursus.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {surveys.map((survey) => {
-              const hasSurveyData = survey.status === "closed" || survey.status === "published";
-              return (
-                <Link
-                  key={survey.id}
-                  href={`/docent/cursus/${courseId}/enquete/${survey.id}`}
-                  className="group block border border-uu-border rounded-lg p-4 hover:border-uu-black hover:shadow-sm transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-uu-yellow"
-                >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <BarChart3
-                        className="w-4 h-4 text-uu-black shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span className="text-sm font-semibold text-uu-text truncate group-hover:text-uu-black transition-colors duration-150">
-                        {survey.name}
-                      </span>
-                    </div>
-                    <SurveyStatusBadge status={survey.status} />
-                  </div>
-
-                  {hasSurveyData ? (
-                    <ResponseBar count={survey.responseCount} total={survey.totalStudents} />
-                  ) : (
-                    <p className="text-xs text-uu-text-secondary mt-2 italic">
-                      Nog niet gepubliceerd
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-end mt-3 text-xs text-uu-black font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                    <span>Bekijk resultaten</span>
-                    <ArrowRight className="w-3 h-3 ml-1" aria-hidden="true" />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Section 4: Results per question ── */}
+      {/* ── Section 3: Results per question ── */}
       <CollapsibleSection
         title="Resultaten per vraag"
         defaultOpen={true}
       >
+        {/* Controls row: survey selector + chart toggle */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          {/* Survey selector pills */}
+          {surveysWithData.length > 1 && (
+            <div
+              className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none"
+              role="group"
+              aria-label="Selecteer enquête"
+            >
+              {surveysWithData.map((s) => {
+                const isActive = s.id === selectedSurveyId;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => setSelectedSurveyId(s.id)}
+                    className={[
+                      "shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150",
+                      "focus:outline-none focus:ring-2 focus:ring-uu-yellow cursor-pointer",
+                      "min-h-[36px]",
+                      isActive
+                        ? "bg-uu-black text-white"
+                        : "bg-uu-surface text-uu-text hover:bg-uu-border",
+                    ].join(" ")}
+                    aria-pressed={isActive}
+                  >
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Chart type toggle */}
+          <ChartToggle activeView={chartView} onToggle={setChartView} />
+        </div>
+
+        {/* Questions for selected survey */}
         {mcQuestions.length === 0 ? (
           <p className="text-sm text-uu-text-secondary">
-            Geen meerkeuzevragen gevonden voor de eerste gesloten enquête.
+            {selectedSurveyId
+              ? "Geen meerkeuzevragen gevonden voor deze enquête."
+              : "Selecteer een enquête om de resultaten te bekijken."}
           </p>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-12">
             {mcQuestions.map((question) => {
               const mcData = getMCResponseData(question.id);
               if (!mcData) return null;
@@ -346,14 +296,14 @@ export default function StatistiekenPage() {
               }));
 
               return (
-                <div key={question.id} className="border-t border-uu-border pt-6 first:border-t-0 first:pt-0">
+                <div key={question.id} className="border-t border-uu-border pt-8 first:border-t-0 first:pt-0">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <p className="text-sm font-medium text-uu-text leading-snug">
                       {question.text}
                     </p>
-                    {firstClosedSurvey && (
+                    {selectedSurvey && (
                       <Link
-                        href={`/docent/cursus/${courseId}/enquete/${firstClosedSurvey.id}/vraag/${question.id}`}
+                        href={`/docent/cursus/${courseId}/enquete/${selectedSurvey.id}/vraag/${question.id}`}
                         className="shrink-0 text-xs text-uu-black font-medium hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-uu-yellow rounded transition-colors duration-150 flex items-center gap-1"
                       >
                         Details
@@ -361,11 +311,15 @@ export default function StatistiekenPage() {
                       </Link>
                     )}
                   </div>
-                  <div className="text-xs text-uu-text-secondary mb-3">
+                  <div className="text-xs text-uu-text-secondary mb-4">
                     {mcData.totalResponses} reacties
                   </div>
-                  <div style={{ height: 200 }}>
-                    <DocentBarChart data={chartData} />
+                  <div style={{ height: 340 }}>
+                    {chartView === "bar" ? (
+                      <DocentBarChart data={chartData} />
+                    ) : (
+                      <DocentPieChart data={chartData} />
+                    )}
                   </div>
                 </div>
               );

@@ -10,9 +10,8 @@ import {
   FileText,
   Eye,
   QrCode,
-  MessageSquare,
-  Send,
   BarChart3,
+  Plus,
 } from "lucide-react";
 import Breadcrumb from "@/components/docent/Breadcrumb";
 import StatCard from "@/components/docent/StatCard";
@@ -24,6 +23,11 @@ import {
   getDocentSurveysByCourse,
   DocentSurvey,
 } from "@/data/mock-docent";
+
+let nextTempId = 9000;
+function generateAccessCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 // ── Status badge ──────────────────────────────────────────────────
 function SurveyStatusBadge({ status }: { status: DocentSurvey["status"] }) {
@@ -58,18 +62,34 @@ function SurveyStatusBadge({ status }: { status: DocentSurvey["status"] }) {
 // ── Page ──────────────────────────────────────────────────────────
 export default function CourseDetailPage() {
   const params = useParams<{ id: string }>();
-  const course = getDocentCourse(params.id);
-  if (!course) notFound();
+  const courseData = getDocentCourse(params.id);
+  if (!courseData) notFound();
+  const course = courseData;
 
-  const surveys = getDocentSurveysByCourse(course.id);
+  const initialSurveys = getDocentSurveysByCourse(course.id);
+
+  // Local surveys state (allows adding new ones in prototype)
+  const [surveys, setSurveys] = useState<DocentSurvey[]>(initialSurveys);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [activeSurvey, setActiveSurvey] = useState<DocentSurvey | null>(null);
 
-  // Remarks state
-  const [remarks, setRemarks] = useState("");
-  const [remarksSaved, setRemarksSaved] = useState(false);
+  function handleAddSurvey() {
+    const newSurvey: DocentSurvey = {
+      id: `new-${nextTempId++}`,
+      courseId: course.id,
+      name: `Nieuwe enquête ${surveys.length + 1}`,
+      status: "draft",
+      responseCount: 0,
+      totalStudents: course.studentCount,
+      publishedAt: null,
+      closedAt: null,
+      accessCode: generateAccessCode(),
+    };
+    setSurveys((prev) => [...prev, newSurvey]);
+  }
+
 
   function openModal(survey: DocentSurvey) {
     setActiveSurvey(survey);
@@ -79,11 +99,6 @@ export default function CourseDetailPage() {
   function closeModal() {
     setModalOpen(false);
     setActiveSurvey(null);
-  }
-
-  function handleSaveRemarks() {
-    setRemarksSaved(true);
-    setTimeout(() => setRemarksSaved(false), 2500);
   }
 
   // Derived stats
@@ -150,10 +165,19 @@ export default function CourseDetailPage() {
 
         {/* Surveys section */}
         <div>
-          <h2 className="text-lg font-semibold text-uu-text mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-uu-black" aria-hidden="true" />
-            Enquêtes
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-uu-text flex items-center gap-2">
+              <FileText className="w-5 h-5 text-uu-black" aria-hidden="true" />
+              Enquêtes
+            </h2>
+            <button
+              onClick={handleAddSurvey}
+              className="inline-flex items-center gap-1.5 px-4 h-10 rounded-lg text-sm font-medium bg-uu-black text-white hover:bg-uu-black/90 transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-uu-yellow focus:ring-offset-1"
+            >
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              Enquête toevoegen
+            </button>
+          </div>
 
           <div className="space-y-3">
             {surveys.length === 0 && (
@@ -262,49 +286,6 @@ export default function CourseDetailPage() {
           </div>
         </div>
 
-        {/* Opmerkingen section */}
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <h2 className="text-lg font-semibold text-uu-text mb-1 flex items-center gap-2">
-            <MessageSquare
-              className="w-5 h-5 text-uu-black"
-              aria-hidden="true"
-            />
-            Opmerkingen voor studenten
-          </h2>
-          <p className="text-sm text-uu-text-secondary mb-4">
-            Schrijf een opmerking die zichtbaar is voor studenten van dit vak.
-          </p>
-
-          <textarea
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
-            rows={4}
-            placeholder="Typ hier een opmerking voor je studenten…"
-            className="w-full rounded-lg border border-uu-border bg-uu-surface px-4 py-3 text-sm text-uu-text placeholder:text-uu-text-secondary resize-none focus:outline-none focus:ring-2 focus:ring-uu-yellow focus:border-transparent transition-colors duration-150"
-            aria-label="Opmerking voor studenten"
-          />
-
-          <div className="flex items-center justify-between mt-3">
-            <span
-              className={`text-xs transition-opacity duration-300 ${
-                remarksSaved
-                  ? "text-uu-success opacity-100"
-                  : "opacity-0"
-              }`}
-              aria-live="polite"
-            >
-              Opmerking opgeslagen!
-            </span>
-            <button
-              onClick={handleSaveRemarks}
-              disabled={!remarks.trim()}
-              className="inline-flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-medium bg-uu-black text-white hover:bg-uu-black/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-uu-yellow focus:ring-offset-2"
-            >
-              <Send className="w-4 h-4" aria-hidden="true" />
-              Opmerking opslaan
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* QR Modal */}
